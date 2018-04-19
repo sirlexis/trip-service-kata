@@ -1,4 +1,5 @@
-﻿using NUnit.Framework;
+﻿using System.Collections.Generic;
+using NUnit.Framework;
 using TripServiceKata.Exception;
 using TripServiceKata.Trip;
 
@@ -16,6 +17,7 @@ namespace TripServiceKata.Tests
             Assert.That(() => tripService.GetTripsByUser(null),
                Throws.TypeOf<UserNotLoggedInException>());
         }
+
         [Test]
         public void Should_return_empty_list_of_trips_when_logged_user_is_not_a_friend_of_another_user()
         {
@@ -25,13 +27,25 @@ namespace TripServiceKata.Tests
             var tripService = new TestableTripService(loggedUser);
 
             var trips = tripService.GetTripsByUser(anotherUser);
-           
 
-            Assert.That(trips.Count,Is.EqualTo(0));
+            CollectionAssert.IsEmpty(trips);
+        }
+        [Test]
+        public void Should_return_list_of_trips_when_logged_user_is_a_friend_of_another_user()
+        {
+            var loggedUser = new User.User();
+            var anotherUser = new User.User();
+            var anotherUserTrip = new Trip.Trip();
+            anotherUser.AddFriend(loggedUser);
+            anotherUser.AddTrip(anotherUserTrip);
+            var tripService = new TestableTripService(loggedUser);
+
+            var trips = tripService.GetTripsByUser(anotherUser);
+
+            CollectionAssert.AreEquivalent(new List<Trip.Trip> {anotherUserTrip}, trips );
+           
         }
     }
-
-
 
     public class TestableTripService : TripService
     {
@@ -46,5 +60,10 @@ namespace TripServiceKata.Tests
         {
             return _loggedUser;
         }
-    }
+
+        protected override List<Trip.Trip> TripsByUser(User.User user)
+        {
+            return user.Trips();
+        }
+}
 }

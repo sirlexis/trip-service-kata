@@ -10,19 +10,41 @@ namespace TripServiceKata.Tests
         [Test]
         public void Should_not_read_trips_when_user_is_not_logged_in()
         {
-            var tripService = new TestableTripService();
-            var user = new User.User();
+            User.User loggedUser = null;
+            var tripService = new TestableTripService(loggedUser);
 
-            Assert.That(() => tripService.GetTripsByUser(user),
+            Assert.That(() => tripService.GetTripsByUser(null),
                Throws.TypeOf<UserNotLoggedInException>());
+        }
+        [Test]
+        public void Should_return_empty_list_of_trips_when_logged_user_is_not_a_friend_of_another_user()
+        {
+            var loggedUser = new User.User();
+            var anotherUser = new User.User();
+            anotherUser.AddTrip(new Trip.Trip());
+            var tripService = new TestableTripService(loggedUser);
+
+            var trips = tripService.GetTripsByUser(anotherUser);
+           
+
+            Assert.That(trips.Count,Is.EqualTo(0));
         }
     }
 
+
+
     public class TestableTripService : TripService
     {
+        private readonly User.User _loggedUser;
+
+        public TestableTripService(User.User loggedUser)
+        {
+            _loggedUser = loggedUser;
+        }
+
         protected override User.User GetLoggedUser()
         {
-            return null;
+            return _loggedUser;
         }
     }
 }
